@@ -1,7 +1,7 @@
 name: stac-fastapi
 on:
   push:
-    branches: [ master ]
+    branches: [ master, feature/3 ]
   pull_request:
     branches: [ master ]
 
