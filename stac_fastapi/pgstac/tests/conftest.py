@@ -1,8 +1,7 @@
 import asyncio
 import json
 import os
-import time
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
 
 import asyncpg
 import pytest
@@ -12,6 +11,7 @@ from pypgstac import pypgstac
 from stac_pydantic import Collection, Item
 
 from stac_fastapi.api.app import StacApi
+from stac_fastapi.api.middleware import MiddlewareConfig
 from stac_fastapi.api.models import create_get_request_model, create_post_request_model
 from stac_fastapi.extensions.core import (
     FieldsExtension,
@@ -92,8 +92,7 @@ async def pgstac(pg):
     await conn.close()
 
 
-@pytest.fixture(scope="session")
-def api_client(pg):
+def _api_client_provider(middleware_configs: Optional[MiddlewareConfig] = []):
     print("creating client with settings")
 
     extensions = [
@@ -113,28 +112,32 @@ def api_client(pg):
         search_get_request_model=create_get_request_model(extensions),
         search_post_request_model=post_request_model,
         response_class=ORJSONResponse,
+        middlewares=middleware_configs,
     )
 
     return api
 
 
-@pytest.mark.asyncio
 @pytest.fixture(scope="session")
-async def app(api_client):
-    time.time()
-    app = api_client.app
-    await connect_to_db(app)
-
-    yield app
-
-    await close_db_connection(app)
+def api_client(pg):
+    return _api_client_provider()
 
 
 @pytest.mark.asyncio
 @pytest.fixture(scope="session")
-async def app_client(app):
+async def app_client(pg, request):
+    # support custom behaviours driven by fixture caller
+    middleware_configs = []
+    if hasattr(request, "param"):
+        setup_func = request.param.get("setup_func")
+        if setup_func is not None:
+            setup_func()
+        middleware_configs = request.param.get("middleware_configs", [])
+    app = _api_client_provider(middleware_configs=middleware_configs).app
     async with AsyncClient(app=app, base_url="http://test") as c:
+        await connect_to_db(app)
         yield c
+        await close_db_connection(app)
 
 
 @pytest.fixture
