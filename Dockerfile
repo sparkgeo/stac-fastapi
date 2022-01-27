@@ -1,6 +1,5 @@
 FROM python:3.8-slim as base
 
-FROM base as builder
 # Any python libraries that require system libraries to be installed will likely
 # need the following packages in order to build
 RUN apt-get update && apt-get install -y build-essential git
