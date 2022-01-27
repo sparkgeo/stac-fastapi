@@ -14,5 +14,5 @@ RUN mkdir -p /install && \
     pip install -e ./stac_fastapi/types && \
     pip install -e ./stac_fastapi/api && \
     pip install -e ./stac_fastapi/extensions && \
-    pip install -e ./stac_fastapi/sqlalchemy && \
-    pip install -e ./stac_fastapi/pgstac
+    pip install -e ./stac_fastapi/sqlalchemy[server] && \
+    pip install -e ./stac_fastapi/pgstac[server]
