@@ -39,12 +39,16 @@ def merge_params(url: str, newparams: Dict) -> str:
 
 
 def get_base_url_from_request(request: Request) -> str:
-    """Account for forwarding headers when deriving base URL."""
+    """
+    Account for forwarding headers when deriving base URL.
+
+    Prioritise standard Forwarded header, look for non-standard X-Forwarded-* if missing.
+    Default to what can be derived from the URL if no headers provided.
+    """
     domain = request.url.hostname
     proto = request.url.scheme
     port_str = str(request.url.port) if request.url.port is not None else None
     forwarded = request.headers.get("forwarded")
-    # prioritise standard Forwarded header, look for X-Forwarded-* if not present
     if forwarded is not None:
         parts = forwarded.split(";")
         for part in parts:
@@ -67,8 +71,8 @@ def get_base_url_from_request(request: Request) -> str:
             pass
         else:
             port_suffix = f":{port_str}"
-    return re.sub(
-        # ensure end in slash
+    # ensure url ends with slash
+    url = re.sub(
         r"([^/])$",
         r"\1/",
         urljoin(
@@ -80,10 +84,11 @@ def get_base_url_from_request(request: Request) -> str:
                     port_suffix,
                 ]
             ),
-            # only append root_path parts that will not override derived proto / port
-            re.sub(rf"http(s)?://{domain}(\:\d+)?", "", request.scope.get("root_path")),
+            # ensure root path starts with slash
+            re.sub(r"^([^/])", r"/\1", request.scope.get("root_path")),
         ),
     )
+    return url
 
 
 @attr.s

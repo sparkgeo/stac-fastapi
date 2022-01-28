@@ -1,6 +1,7 @@
 import json
 import uuid
 from datetime import datetime, timedelta
+from http.client import HTTP_PORT
 from typing import Callable
 from urllib.parse import parse_qs, urljoin, urlparse
 
@@ -1064,11 +1065,12 @@ async def test_relative_link_construction():
             "type": "http",
             "scheme": "http",
             "method": "PUT",
-            "root_path": "http://test/stac",
+            "root_path": "/stac",  # root_path should not have proto, domain, or port
             "path": "/",
             "raw_path": b"/tab/abc",
             "query_string": b"",
             "headers": {},
+            "server": ("test", HTTP_PORT),
         }
     )
     links = CollectionLinks(collection_id="naip", request=req)
