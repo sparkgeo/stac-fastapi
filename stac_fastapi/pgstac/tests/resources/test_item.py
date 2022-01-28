@@ -1253,3 +1253,49 @@ async def test_search_datetime_validation_errors(app_client):
 
         resp = await app_client.get("/search?datetime={}".format(dt))
         assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_get_collection_items_forwarded_header(
+    app_client, load_test_collection, load_test_item
+):
+    coll = load_test_collection
+    resp = await app_client.get(
+        f"/collections/{coll.id}/items",
+        headers={"Forwarded": "proto=https;host=test:1234"},
+    )
+    for link in resp.json()["features"][0]["links"]:
+        assert link["href"].startswith("https://test:1234/")
+
+
+@pytest.mark.asyncio
+async def test_get_collection_items_x_forwarded_headers(
+    app_client, load_test_collection, load_test_item
+):
+    coll = load_test_collection
+    resp = await app_client.get(
+        f"/collections/{coll.id}/items",
+        headers={
+            "X-Forwarded-Port": "1234",
+            "X-Forwarded-Proto": "https",
+        },
+    )
+    for link in resp.json()["features"][0]["links"]:
+        assert link["href"].startswith("https://test:1234/")
+
+
+@pytest.mark.asyncio
+async def test_get_collection_items_duplicate_forwarded_headers(
+    app_client, load_test_collection, load_test_item
+):
+    coll = load_test_collection
+    resp = await app_client.get(
+        f"/collections/{coll.id}/items",
+        headers={
+            "Forwarded": "proto=https;host=test:1234",
+            "X-Forwarded-Port": "4321",
+            "X-Forwarded-Proto": "http",
+        },
+    )
+    for link in resp.json()["features"][0]["links"]:
+        assert link["href"].startswith("https://test:1234/")
