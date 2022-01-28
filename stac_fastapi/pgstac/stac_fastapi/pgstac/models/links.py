@@ -76,14 +76,7 @@ def get_base_url_from_request(request: Request) -> str:
         r"([^/])$",
         r"\1/",
         urljoin(
-            "".join(
-                [
-                    proto,
-                    "://",
-                    domain,
-                    port_suffix,
-                ]
-            ),
+            f"{proto}://{domain}{port_suffix}",
             # ensure root path starts with slash
             re.sub(r"^([^/])", r"/\1", request.scope.get("root_path")),
         ),
