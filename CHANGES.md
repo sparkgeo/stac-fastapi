@@ -5,6 +5,7 @@
 ### Added
 
 * Added ability to configure CORS middleware via JSON configuration file and environment variable, rather than having to modify code.
+* Respect `Forwarded` or `X-Forwarded-*` request headers when building links to better accommodate load balancers and proxies.
 
 ### Changed
 
