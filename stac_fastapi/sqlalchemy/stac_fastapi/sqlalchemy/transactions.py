@@ -10,6 +10,7 @@ from stac_fastapi.extensions.third_party.bulk_transactions import (
     Items,
 )
 from stac_fastapi.sqlalchemy import serializers
+from stac_fastapi.sqlalchemy.links import get_base_url_from_request
 from stac_fastapi.sqlalchemy.models import database
 from stac_fastapi.sqlalchemy.session import Session
 from stac_fastapi.types import stac as stac_types
@@ -35,7 +36,7 @@ class TransactionsClient(BaseTransactionsClient):
 
     def create_item(self, model: stac_types.Item, **kwargs) -> stac_types.Item:
         """Create item."""
-        base_url = str(kwargs["request"].base_url)
+        base_url = get_base_url_from_request(kwargs["request"])
         data = self.item_serializer.stac_to_db(model)
         with self.session.writer.context_session() as session:
             session.add(data)
@@ -45,7 +46,7 @@ class TransactionsClient(BaseTransactionsClient):
         self, model: stac_types.Collection, **kwargs
     ) -> stac_types.Collection:
         """Create collection."""
-        base_url = str(kwargs["request"].base_url)
+        base_url = get_base_url_from_request(kwargs["request"])
         data = self.collection_serializer.stac_to_db(model)
         with self.session.writer.context_session() as session:
             session.add(data)
@@ -53,7 +54,7 @@ class TransactionsClient(BaseTransactionsClient):
 
     def update_item(self, model: stac_types.Item, **kwargs) -> stac_types.Item:
         """Update item."""
-        base_url = str(kwargs["request"].base_url)
+        base_url = get_base_url_from_request(kwargs["request"])
         with self.session.reader.context_session() as session:
             query = session.query(self.item_table).filter(
                 self.item_table.id == model["id"]
@@ -74,7 +75,7 @@ class TransactionsClient(BaseTransactionsClient):
         self, model: stac_types.Collection, **kwargs
     ) -> stac_types.Collection:
         """Update collection."""
-        base_url = str(kwargs["request"].base_url)
+        base_url = get_base_url_from_request(kwargs["request"])
         with self.session.reader.context_session() as session:
             query = session.query(self.collection_table).filter(
                 self.collection_table.id == model["id"]
@@ -92,7 +93,7 @@ class TransactionsClient(BaseTransactionsClient):
         self, item_id: str, collection_id: str, **kwargs
     ) -> stac_types.Item:
         """Delete item."""
-        base_url = str(kwargs["request"].base_url)
+        base_url = get_base_url_from_request(kwargs["request"])
         with self.session.writer.context_session() as session:
             query = session.query(self.item_table).filter(
                 self.item_table.collection_id == collection_id
@@ -108,7 +109,7 @@ class TransactionsClient(BaseTransactionsClient):
 
     def delete_collection(self, collection_id: str, **kwargs) -> stac_types.Collection:
         """Delete collection."""
-        base_url = str(kwargs["request"].base_url)
+        base_url = get_base_url_from_request(kwargs["request"])
         with self.session.writer.context_session() as session:
             query = session.query(self.collection_table).filter(
                 self.collection_table.id == collection_id
